@@ -10,112 +10,112 @@ class NoticiaRepository(
     private val webclient: NoticiaWebClient = NoticiaWebClient()
 ) {
 
-    fun buscaTodos(
-        quandoSucesso: (List<Noticia>) -> Unit,
-        quandoFalha: (erro: String?) -> Unit
+    fun getAllNews(
+        onSuccess: (List<Noticia>) -> Unit,
+        onFail: (erro: String?) -> Unit
     ) {
-        buscaInterno(quandoSucesso)
-        buscaNaApi(quandoSucesso, quandoFalha)
+        getOffline(onSuccess)
+        getOnline(onSuccess, onFail)
     }
 
-    fun salva(
-        noticia: Noticia,
-        quandoSucesso: (noticiaNova: Noticia) -> Unit,
-        quandoFalha: (erro: String?) -> Unit
+    fun save(
+        news: Noticia,
+        onSuccess: (noticiaNova: Noticia) -> Unit,
+        onFail: (erro: String?) -> Unit
     ) {
-        salvaNaApi(noticia, quandoSucesso, quandoFalha)
+        saveOnline(news, onSuccess, onFail)
     }
 
     fun remove(
-        noticia: Noticia,
-        quandoSucesso: () -> Unit,
-        quandoFalha: (erro: String?) -> Unit
+        news: Noticia,
+        onSuccess: () -> Unit,
+        onFail: (erro: String?) -> Unit
     ) {
-        removeNaApi(noticia, quandoSucesso, quandoFalha)
+        deleteOnline(news, onSuccess, onFail)
     }
 
-    fun edita(
-        noticia: Noticia,
-        quandoSucesso: (noticiaEditada: Noticia) -> Unit,
-        quandoFalha: (erro: String?) -> Unit
+    fun edit(
+        news: Noticia,
+        onSuccess: (noticiaEditada: Noticia) -> Unit,
+        onFail: (erro: String?) -> Unit
     ) {
-        editaNaApi(noticia, quandoSucesso, quandoFalha)
+        editOnline(news, onSuccess, onFail)
     }
 
-    fun buscaPorId(
-        noticiaId: Long,
-        quandoSucesso: (noticiaEncontrada: Noticia?) -> Unit
+    fun getById(
+        newsId: Long,
+        onSuccess: (noticiaEncontrada: Noticia?) -> Unit
     ) {
         BaseAsyncTask(quandoExecuta = {
-            dao.buscaPorId(noticiaId)
-        }, quandoFinaliza = quandoSucesso)
+            dao.buscaPorId(newsId)
+        }, quandoFinaliza = onSuccess)
             .execute()
     }
 
-    private fun buscaNaApi(
-        quandoSucesso: (List<Noticia>) -> Unit,
-        quandoFalha: (erro: String?) -> Unit
+    private fun getOnline(
+        onSuccess: (List<Noticia>) -> Unit,
+        onFail: (erro: String?) -> Unit
     ) {
         webclient.buscaTodas(
             quandoSucesso = { noticiasNovas ->
                 noticiasNovas?.let {
-                    salvaInterno(noticiasNovas, quandoSucesso)
+                    saveOffline(noticiasNovas, onSuccess)
                 }
-            }, quandoFalha = quandoFalha
+            }, quandoFalha = onFail
         )
     }
 
-    private fun buscaInterno(quandoSucesso: (List<Noticia>) -> Unit) {
+    private fun getOffline(onSuccess: (List<Noticia>) -> Unit) {
         BaseAsyncTask(quandoExecuta = {
             dao.buscaTodos()
-        }, quandoFinaliza = quandoSucesso)
+        }, quandoFinaliza = onSuccess)
             .execute()
     }
 
 
-    private fun salvaNaApi(
-        noticia: Noticia,
-        quandoSucesso: (noticiaNova: Noticia) -> Unit,
-        quandoFalha: (erro: String?) -> Unit
+    private fun saveOnline(
+        news: Noticia,
+        onSuccess: (noticiaNova: Noticia) -> Unit,
+        onFail: (erro: String?) -> Unit
     ) {
         webclient.salva(
-            noticia,
+            news,
             quandoSucesso = {
                 it?.let { noticiaSalva ->
-                    salvaInterno(noticiaSalva, quandoSucesso)
+                    saveOffline(noticiaSalva, onSuccess)
                 }
-            }, quandoFalha = quandoFalha
+            }, quandoFalha = onFail
         )
     }
 
-    private fun salvaInterno(
-        noticias: List<Noticia>,
-        quandoSucesso: (noticiasNovas: List<Noticia>) -> Unit
+    private fun saveOffline(
+        news: List<Noticia>,
+        onSuccess: (newNews: List<Noticia>) -> Unit
     ) {
         BaseAsyncTask(
             quandoExecuta = {
-                dao.salva(noticias)
+                dao.salva(news)
                 dao.buscaTodos()
-            }, quandoFinaliza = quandoSucesso
+            }, quandoFinaliza = onSuccess
         ).execute()
     }
 
-    private fun salvaInterno(
-        noticia: Noticia,
-        quandoSucesso: (noticiaNova: Noticia) -> Unit
+    private fun saveOffline(
+        news: Noticia,
+        onSuccess: (noticiaNova: Noticia) -> Unit
     ) {
         BaseAsyncTask(quandoExecuta = {
-            dao.salva(noticia)
-            dao.buscaPorId(noticia.id)
+            dao.salva(news)
+            dao.buscaPorId(news.id)
         }, quandoFinaliza = { noticiaEncontrada ->
             noticiaEncontrada?.let {
-                quandoSucesso(it)
+                onSuccess(it)
             }
         }).execute()
 
     }
 
-    private fun removeNaApi(
+    private fun deleteOnline(
         noticia: Noticia,
         quandoSucesso: () -> Unit,
         quandoFalha: (erro: String?) -> Unit
@@ -123,36 +123,36 @@ class NoticiaRepository(
         webclient.remove(
             noticia.id,
             quandoSucesso = {
-                removeInterno(noticia, quandoSucesso)
+                deleteOffline(noticia, quandoSucesso)
             },
             quandoFalha = quandoFalha
         )
     }
 
 
-    private fun removeInterno(
-        noticia: Noticia,
-        quandoSucesso: () -> Unit
+    private fun deleteOffline(
+        news: Noticia,
+        onSuccess: () -> Unit
     ) {
         BaseAsyncTask(quandoExecuta = {
-            dao.remove(noticia)
+            dao.remove(news)
         }, quandoFinaliza = {
-            quandoSucesso()
+            onSuccess()
         }).execute()
     }
 
-    private fun editaNaApi(
-        noticia: Noticia,
-        quandoSucesso: (noticiaEditada: Noticia) -> Unit,
-        quandoFalha: (erro: String?) -> Unit
+    private fun editOnline(
+        news: Noticia,
+        onSuccess: (noticiaEditada: Noticia) -> Unit,
+        onFail: (erro: String?) -> Unit
     ) {
         webclient.edita(
-            noticia.id, noticia,
+            news.id, news,
             quandoSucesso = { noticiaEditada ->
                 noticiaEditada?.let {
-                    salvaInterno(noticiaEditada, quandoSucesso)
+                    saveOffline(noticiaEditada, onSuccess)
                 }
-            }, quandoFalha = quandoFalha
+            }, quandoFalha = onFail
         )
     }
 

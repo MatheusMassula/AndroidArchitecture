@@ -2,9 +2,7 @@ package br.com.alura.technews.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager.VERTICAL
@@ -15,18 +13,23 @@ import br.com.alura.technews.repository.NoticiaRepository
 import br.com.alura.technews.ui.activity.extensions.mostraErro
 import br.com.alura.technews.ui.recyclerview.adapter.ListaNoticiasAdapter
 import br.com.alura.technews.ui.viewmodel.ListaNoticiasViewModel
+import br.com.alura.technews.ui.viewmodel.factory.ListaNoticiasViewModelFactory
 import kotlinx.android.synthetic.main.activity_lista_noticias.*
 
 private const val TITULO_APPBAR = "Notícias"
-private const val MENSAGEM_FALHA_CARREGAR_NOTICIAS = "Não foi possível carregar as novas notícias"
+private const val MENSAGEM_FALHA_CARREGAR_NOTICIAS = "Unable to load new news"
 
 class ListaNoticiasActivity : AppCompatActivity() {
 
-    private val repository by lazy {
-        NoticiaRepository(AppDatabase.getInstance(this).noticiaDAO)
-    }
     private val adapter by lazy {
         ListaNoticiasAdapter(context = this)
+    }
+
+    private val viewModel by lazy {
+        val respository = NoticiaRepository(AppDatabase.getInstance(this).noticiaDAO)
+        val factory = ListaNoticiasViewModelFactory(respository)
+        val provider = ViewModelProviders.of(this, factory)
+        provider.get(ListaNoticiasViewModel::class.java)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,10 +38,6 @@ class ListaNoticiasActivity : AppCompatActivity() {
         title = TITULO_APPBAR
         configuraRecyclerView()
         configuraFabAdicionaNoticia()
-
-        val provider = ViewModelProviders.of(this)
-        val viewModel = provider.get(ListaNoticiasViewModel::class.java)
-        Log.i("viewModel", viewModel.toString())
     }
 
     override fun onResume() {
@@ -64,10 +63,11 @@ class ListaNoticiasActivity : AppCompatActivity() {
     }
 
     private fun buscaNoticias() {
-        repository.buscaTodos(
-            quandoSucesso = {
+        viewModel.getAllNews(
+            onSuccess = {
                 adapter.atualiza(it)
-            }, quandoFalha = {
+            },
+            onFail = {
                 mostraErro(MENSAGEM_FALHA_CARREGAR_NOTICIAS)
             }
         )

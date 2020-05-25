@@ -40,7 +40,7 @@ class FormularioNoticiaActivity : AppCompatActivity() {
     }
 
     private fun preencheFormulario() {
-        repository.buscaPorId(noticiaId, quandoSucesso = { noticiaEncontrada ->
+        repository.getById(noticiaId, onSuccess = { noticiaEncontrada ->
             if (noticiaEncontrada != null) {
                 activity_formulario_noticia_titulo.setText(noticiaEncontrada.titulo)
                 activity_formulario_noticia_texto.setText(noticiaEncontrada.texto)
@@ -73,16 +73,16 @@ class FormularioNoticiaActivity : AppCompatActivity() {
         }
 
         if (noticia.id > 0) {
-            repository.edita(
+            repository.edit(
                 noticia,
-                quandoSucesso = sucesso,
-                quandoFalha = falha
+                onSuccess = sucesso,
+                onFail = falha
             )
         } else {
-            repository.salva(
+            repository.save(
                 noticia,
-                quandoSucesso = sucesso,
-                quandoFalha = falha
+                onSuccess = sucesso,
+                onFail = falha
             )
         }
     }

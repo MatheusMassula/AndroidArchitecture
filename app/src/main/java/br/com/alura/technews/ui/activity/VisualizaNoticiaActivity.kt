@@ -53,7 +53,7 @@ class VisualizaNoticiaActivity : AppCompatActivity() {
     }
 
     private fun buscaNoticiaSelecionada() {
-        repository.buscaPorId(noticiaId, quandoSucesso = { noticiaEncontrada ->
+        repository.getById(noticiaId, onSuccess = { noticiaEncontrada ->
             noticiaEncontrada?.let {
                 this.noticia = it
                 preencheCampos(it)
@@ -75,9 +75,9 @@ class VisualizaNoticiaActivity : AppCompatActivity() {
 
     private fun remove() {
         if (::noticia.isInitialized) {
-            repository.remove(noticia, quandoSucesso = {
+            repository.remove(noticia, onSuccess = {
                 finish()
-            }, quandoFalha = {
+            }, onFail = {
                 mostraErro(MENSAGEM_FALHA_REMOCAO)
             })
         }
